@@ -114,7 +114,7 @@ a {
 
 .project-image {
     width: 100%;
-    aspect-ratio: 4 / 3; /* Proporción ideal para fotografía de objetos */
+    aspect-ratio: 16 / 9; /* Proporción horizontal fija para tus imágenes 1400x788 */
     background-color: #eee;
     overflow: hidden;
     margin-bottom: 1rem;
@@ -242,4 +242,25 @@ a {
     .footer-content h2 {
         font-size: 1.8rem;
     }
+}
+/* ==========================================================================
+   AJUSTE PARA EL BANNER PANORÁMICO DE LOGO
+   ========================================================================== */
+.hero-banner {
+    width: 100%;
+    margin-bottom: 3rem; /* Espacio entre el banner y el texto de abajo */
+    overflow: hidden;
+    background-color: #fcfcfc;
+}
+
+.hero-banner img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain; /* Asegura que el logo no se corte ni se deforme */
+}
+
+/* Ajuste de espaciado para que no quede muy abajo */
+.hero {
+    padding: 4rem 4% 4rem 4%; 
 }
