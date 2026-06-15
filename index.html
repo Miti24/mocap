@@ -3,115 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOCap — Matías Oyarzo Carrillo | Diseño Industrial</title>
-    <!-- Tipografía limpia y moderna desde Google Fonts -->
+    <title>MOCap — Matías Oyarzo Carrillo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- Enlace al archivo de estilos que crearemos después -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- CABECERA / NAVEGACIÓN -->
-    <header class="header">
-        <div class="logo">MOC<span>ap</span></div>
-        <nav class="nav">
-            <a href="#proyectos">Proyectos</a>
-            <a href="#sobre-mi">Sobre mí</a>
-            <a href="#contacto">Contacto</a>
-        </nav>
-    </header>
-
-    <!-- INTRODUCCIÓN / HERO -->
-    <section class="hero">
-        <!-- Banner panorámico con tu logo -->
-        <div class="hero-banner">
-            <img src="images/header-logo.png" alt="MOCap Banner">
-        </div>
+    <div class="split-container">
         
-        <div class="hero-content">
-            <h1>Diseñador Industrial con enfoque en la autogestión.</h1>
-            <p class="subtitle">Matías Oyarzo Carrillo.</p>
-        </div>
-    </section>
+        <div class="panel-left">
+            <div class="brand-header">
+                <div class="logo">MOCap</div>
+                <div class="sub-logo">Matías Oyarzo Carrillo</div>
+            </div>
 
-    <!-- GALERÍA DE PROYECTOS -->
-    <section id="proyectos" class="portfolio-section">
-        <h2 class="section-title">PROYECTOS RECIENTES</h2>
-        
-        <div class="grid-portfolio">
-            
-            <!-- Proyecto 1: Mobiliario (Ejemplo) -->
-            <article class="project-card">
-                <div class="project-image">
-                    <img src="images\sedia1\sedia1_a.jpg" alt="De Autoprogettazione: Sedia">
-                </div>
-                <div class="project-info">
-                    <span class="project-category">Mobiliario / AutoProyectos</span>
-                    <h3 class="project-title">De Autoprogettazione: Sedia</h3>
-                </div>
-            </article>
+            <hr class="section-divider">
 
-            <!-- Proyecto 2: Retail / Arquitectura (Ejemplo) -->
-            <article class="project-card">
-                <div class="project-image">
-                    <img src="images\mesa2\mesa2_a.jpg" alt="Proyecto #2">
-                </div>
-                <div class="project-info">
-                    <span class="project-category">Mobiliario / AutoProyectos</span>
-                    <h3 class="project-title">De Autoprogettazione: Tavolo Rettangolare</h3>
-                </div>
-            </article>
+            <div class="work-section-title">Proyectos</div>
 
-            <!-- Proyecto 3: Textil / Objeto (Ejemplo) -->
-            <article class="project-card">
-                <div class="project-image">
-                    <img src="https://via.placeholder.com/800x600" alt="Proyecto 3">
-                </div>
-                <div class="project-info">
-                    <span class="project-category">Textil / Objeto</span>
-                    <h3 class="project-title">Exploración de Materiales</h3>
-                </div>
-            </article>
+            <div class="project-tags-container">
+                <button class="tag-btn active" data-folder="images/sedia1" data-link="sedia1.html">Mobiliario — Sedia 1 — Enzo Mari</button>
+                <button class="tag-btn" data-folder="images/mesa1" data-link="mesa1.html">Mobiliario — Tavolo (Viga en Celosía) — Enzo Mari</button>
+                <button class="tag-btn" data-folder="images/mesa2" data-link="mesa2.html">Mobiliario — Tavolo (Patas Angulares) — Enzo Mari</button>
+                <button class="tag-btn" data-folder="images/estanteria" data-link="libreria.html">Mobiliario — Libreria (Autoprogettazione) — Enzo Mari</button>
+                
+                <button class="tag-btn placeholder-btn" data-folder="" data-link="#">Proyecto 5 — Disponible</button>
+                <button class="tag-btn placeholder-btn" data-folder="" data-link="#">Proyecto 6 — Disponible</button>
+                <button class="tag-btn placeholder-btn" data-folder="" data-link="#">Proyecto 7 — Disponible</button>
+                <button class="tag-btn placeholder-btn" data-folder="" data-link="#">Proyecto 8 — Disponible</button>
+            </div>
 
-            <!-- Proyecto 4: Impresos / Publicaciones (Ejemplo) -->
-            <article class="project-card">
-                <div class="project-image">
-                    <img src="https://via.placeholder.com/800x600" alt="AutoPublicado">
+            <div class="info-footer">
+                <div class="info-title">Información de contacto</div>
+                <p class="contact-email"><a href="mailto:info@mocap.qzz.io">info@mocap.qzz.io</a></p>
+                <div class="social-links">
+                    <a href="#" target="_blank">Instagram</a>
+                    <a href="#" target="_blank">LinkedIn</a>
                 </div>
-                <div class="project-info">
-                    <span class="project-category">Editorial / AutoPublicado</span>
-                    <h3 class="project-title">Registro Visual o Fanzine</h3>
-                </div>
-            </article>
-
-        </div>
-    </section>
-
-    <!-- SOBRE MÍ -->
-    <section id="sobre-mi" class="about-section">
-        <div class="about-container">
-            <h2 class="section-title">Sobre MOCap</h2>
-            <div class="about-content">
-                <p>Soy Diseñador Industrial enfocado en el desarrollo de mobiliario, con experiencia e interés en proyectos textiles, arquitectura y diseño para retail. Mi práctica se divide entre el desarrollo profesional y los proyectos autogestionados y autopublicados.</p>
-                <p>MOCap funciona como un espacio de experimentación donde las siglas de mi nombre (Matías Oyarzo Carrillo) se cruzan con el concepto técnico del <em>mockup</em>, entendiendo el diseño como un proceso continuo de prototipado y materialización.</p>
             </div>
         </div>
-    </section>
 
-    <!-- CONTACTO / FOOTER -->
-    <footer id="contacto" class="footer">
-        <div class="footer-content">
-            <h2>¿Tienes un proyecto en mente?</h2>
-            <p>Hablemos sobre mobiliario, colaboraciones o consultoría de diseño.</p>
-            <a href="mailto:mocap@outlook.cl" class="contact-button">Contacto por Correo</a>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2026 MOCap. Todos los derechos reservados.</p>
-            </div>
+        <div class="panel-right" id="panel-right-scroll">
+            <div class="edge-fade fade-top"></div>
+            <div class="edge-fade fade-bottom"></div>
+
+            <div class="project-images-scroll-container" id="images-viewer">
+                </div>
         </div>
-    </footer>
 
+    </div>
+
+    <script src="main.js"></script>
 </body>
 </html>
