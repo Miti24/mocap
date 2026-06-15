@@ -176,12 +176,12 @@ body {
 
 /* Capas fijas para los degradados de los bordes (Fades) */
 .edge-fade {
-    position: fixed;
+    position: absolute; /* CAMBIADO: De fixed a absolute */
     right: 0;
-    width: 50%;
+    width: 100%; /* CAMBIADO: Ahora ocupa el 100% de su contenedor derecho */
     height: 12vh;
     z-index: 10;
-    pointer-events: none; /* Permite interactuar y arrastrar a través de ellos */
+    pointer-events: none; 
 }
 
 .fade-top {
