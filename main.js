@@ -1,4 +1,32 @@
 document.addEventListener("DOMContentLoaded", () => {
+// ==========================================================================
+    // SISTEMA DE CONTROL DE ACCESO TEMPORAL
+    // ==========================================================================
+    const CLAVE_ACCESO = "6484"; // <-- CAMBIA AQUÍ TU CONTRASEÑA
+    
+    const overlay = document.getElementById("gatekeeper-overlay");
+    const inputPass = document.getElementById("gatekeeper-pass");
+    const errorMsg = document.getElementById("gatekeeper-error");
+
+    // Enfocar automáticamente el input al entrar
+    inputPass.focus();
+
+    inputPass.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            if (inputPass.value === CLAVE_ACCESO) {
+                // Esconder la pantalla negra con desvanecimiento fluido
+                overlay.style.opacity = "0";
+                overlay.style.visibility = "hidden";
+                errorMsg.style.opacity = "0";
+            } else {
+                // Mostrar error y limpiar input
+                errorMsg.style.opacity = "1";
+                inputPass.value = "";
+                inputPass.classList.add("shake"); // Opcional: feedback visual
+                setTimeout(() => inputPass.classList.remove("shake"), 300);
+            }
+        }
+    });
     const proyectosImagenes = {
         "images/sedia1": ["sedia1_a.jpg", "sedia1_c.jpg", "sedia1_d.jpg", "sedia1_plano.png"],
         "images/mesa1": ["mesa1_a.jpg", "mesa1_c.jpg", "mesa1_d.jpg", "mesa1_plano.png", "mesa1_ref.png"],
