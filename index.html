@@ -11,30 +11,32 @@
 </head>
 <body>
 
+    <div id="gatekeeper-overlay">
+        <div class="gatekeeper-box">
+            <label for="gatekeeper-pass">MOCap — En mantenimiento</label>
+            <input type="password" id="gatekeeper-pass" placeholder="Contraseña" autocomplete="off">
+            <p id="gatekeeper-error">Contraseña incorrecta</p>
+        </div>
+    </div>
+
     <div class="split-container">
-        
         <div class="panel-left">
             <div class="brand-header">
                 <div class="logo">MOCap</div>
                 <div class="sub-logo">Matías Oyarzo Carrillo</div>
             </div>
-
             <hr class="section-divider">
-
             <div class="work-section-title">Proyectos</div>
-
             <div class="project-tags-container">
                 <button class="tag-btn active" data-folder="images/sedia1" data-link="sedia1.html">Mobiliario — Sedia 1 — Enzo Mari</button>
                 <button class="tag-btn" data-folder="images/mesa1" data-link="mesa1.html">Mobiliario — Tavolo (Viga en Celosía) — Enzo Mari</button>
                 <button class="tag-btn" data-folder="images/mesa2" data-link="mesa2.html">Mobiliario — Tavolo (Patas Angulares) — Enzo Mari</button>
                 <button class="tag-btn" data-folder="images/estanteria" data-link="libreria.html">Mobiliario — Libreria (Autoprogettazione) — Enzo Mari</button>
-                
                 <button class="tag-btn placeholder-btn" data-folder="" data-link="#">Proyecto 5 — Disponible</button>
                 <button class="tag-btn placeholder-btn" data-folder="" data-link="#">Proyecto 6 — Disponible</button>
                 <button class="tag-btn placeholder-btn" data-folder="" data-link="#">Proyecto 7 — Disponible</button>
                 <button class="tag-btn placeholder-btn" data-folder="" data-link="#">Proyecto 8 — Disponible</button>
             </div>
-
             <div class="info-footer">
                 <div class="info-title">Información de contacto</div>
                 <p class="contact-email"><a href="mailto:info@mocap.qzz.io">info@mocap.qzz.io</a></p>
@@ -44,15 +46,11 @@
                 </div>
             </div>
         </div>
-
         <div class="panel-right" id="panel-right-scroll">
             <div class="edge-fade fade-top"></div>
             <div class="edge-fade fade-bottom"></div>
-
-            <div class="project-images-scroll-container" id="images-viewer">
-                </div>
+            <div class="project-images-scroll-container" id="images-viewer"></div>
         </div>
-
     </div>
 
    <script src="main.js" defer></script>
