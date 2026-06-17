@@ -1,600 +1,573 @@
-let points = [];
-let grabbedPointIndex = null;
-let textString = "";
-let bgImg = null;
-let customFont = null;
-let lastPointsCount = 0;
-
-let isDraggingKnob = false;
-let knobAngle = 0; 
-let groupWordsActive = false;
-
-let clipTextActive = false;
-let contourMode = "curve"; 
-
-// Capa PGrahics auxiliar para procesar la máscara real de calado tipográfico
-let maskBuffer;
-
-let currentWindowsLayout = "normal"; 
-
-const textInput = document.getElementById('text-input');
-const bgColorInput = document.getElementById('bg-color');
-const textColorInput = document.getElementById('text-color');
-const canvasBgColorInput = document.getElementById('canvas-bg-color');
-
-const bgColorPreview = document.getElementById('bg-color-preview');
-const textColorPreview = document.getElementById('text-color-preview');
-const canvasBgPreview = document.getElementById('canvas-bg-preview');
-
-const sizeSlider = document.getElementById('size-slider');
-const strokeSlider = document.getElementById('stroke-slider');
-const rotateKnob = document.getElementById('rotation-knob');
-const knobIndicator = document.getElementById('knob-indicator');
-const groupWordsBtn = document.getElementById('group-words-btn');
-const resetBtn = document.getElementById('reset-btn');
-const exportBtn = document.getElementById('export-btn');
-const infoText = document.getElementById('dynamic-info');
-
-const sizeModeSelect = document.getElementById('size-mode');
-const ratioSelectorGroup = document.getElementById('ratio-selector-group');
-const aspectRatioSelect = document.getElementById('aspect-ratio');
-const customDimensionsDiv = document.getElementById('custom-dimensions');
-const customWInput = document.getElementById('custom-w');
-const customHInput = document.getElementById('custom-h');
-const labelW = document.getElementById('label-w');
-const labelH = document.getElementById('label-h');
-
-const bgImageInput = document.getElementById('bg-image-input');
-const imageAdjustRow = document.getElementById('image-adjust-row');
-const imgZoom = document.getElementById('img-zoom');
-const imgX = document.getElementById('img-x');
-const imgY = document.getElementById('img-y');
-const removeImgBtn = document.getElementById('remove-img-btn');
-
-const fontInput = document.getElementById('font-input');
-const fontButtonLabel = document.getElementById('font-button-label');
-
-const moveCanvasUpBtn = document.getElementById('move-canvas-up-btn');
-const moveCanvasDownBtn = document.getElementById('move-canvas-down-btn');
-
-const clipTextBtn = document.getElementById('clip-text-btn');
-const contourCurveBtn = document.getElementById('contour-curve-btn');
-const contourSharpBtn = document.getElementById('contour-sharp-btn');
-
-function setup() {
-    let canvas = createCanvas(600, 600);
-    canvas.parent('canvas-container');
-    
-    // Crear el buffer gráfico con las mismas dimensiones para operaciones de calado
-    maskBuffer = createGraphics(width, height);
-    
-    resetBtn.addEventListener('click', fullReset);
-    exportBtn.addEventListener('click', exportPoster);
-    sizeModeSelect.addEventListener('change', handleSizeModeChange);
-    aspectRatioSelect.addEventListener('change', updateCanvasDimensions);
-    customWInput.addEventListener('input', updateCanvasDimensions);
-    customHInput.addEventListener('input', updateCanvasDimensions);
-    
-    bgColorInput.addEventListener('input', () => bgColorPreview.style.backgroundColor = bgColorInput.value);
-    textColorInput.addEventListener('input', () => textColorPreview.style.backgroundColor = textColorInput.value);
-    canvasBgColorInput.addEventListener('input', () => canvasBgPreview.style.backgroundColor = canvasBgColorInput.value);
-    
-    bgImageInput.addEventListener('change', handleImageUpload);
-    removeImgBtn.addEventListener('click', removeBackgroundImage);
-    fontInput.addEventListener('change', handleFontUpload);
-
-    groupWordsBtn.addEventListener('click', toggleGroupWords);
-    
-    clipTextBtn.addEventListener('click', toggleClipText);
-    contourCurveBtn.addEventListener('click', () => setContourMode("curve"));
-    contourSharpBtn.addEventListener('click', () => setContourMode("sharp"));
-
-    moveCanvasUpBtn.addEventListener('click', () => { if(currentWindowsLayout === "normal") animateLayoutSwap(); });
-    moveCanvasDownBtn.addEventListener('click', () => { if(currentWindowsLayout === "swapped") animateLayoutSwap(); });
-
-    rotateKnob.addEventListener('mousedown', (e) => { isDraggingKnob = true; handleKnobRotation(e); });
-    window.addEventListener('mousemove', (e) => { if (isDraggingKnob) handleKnobRotation(e); });
-    window.addEventListener('mouseup', () => isDraggingKnob = false);
-
-    textAlign(CENTER, CENTER);
-    updateBufferFont();
-    textStyle(BOLD);
-
-    initializeIsland();
-    
-    initWindowDragging(document.getElementById('controls-panel'));
-    initWindowDragging(document.getElementById('canvas-window'));
-    
-    updateWindowsPositions();
+:root {
+    --bg-main: #f1f3f7;
+    --panel-bg: rgba(255, 255, 255, 0.95);
+    --border-color: #e2e8f0;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --input-bg: #ffffff;
+    --knob-bg: #ecf0f5;
 }
 
-function draw() {
-    // 1. Dibujar fondo del canvas principal e imagen si existe
-    background(canvasBgColorInput.value);
-    
-    if (bgImg) {
-        push();
-        imageMode(CENTER);
-        translate(width / 2 + parseInt(imgX.value), height / 2 + parseInt(imgY.value));
-        let zoomFactor = map(imgZoom.value, 10, 300, 0.1, 3.0);
-        image(bgImg, 0, 0, bgImg.width * zoomFactor, bgImg.height * zoomFactor);
-        pop();
-    }
-    
-    if (groupWordsActive) {
-        textString = textInput.value; 
-    } else {
-        textString = textInput.value.replace(/\s/g, ''); 
-    }
-    
-    let numPoints = textString.length;
-    infoText.innerText = `Tamaño: ${width}x${height} px`;
-
-    if (numPoints !== lastPointsCount && numPoints > 2) {
-        adjustPointsCount();
-        lastPointsCount = numPoints;
-    }
-
-    if (grabbedPointIndex !== null) {
-        let targetX = mouseX;
-        let targetY = mouseY;
-        
-        let deltaX = targetX - points[grabbedPointIndex].x;
-        let deltaY = targetY - points[grabbedPointIndex].y;
-        
-        points[grabbedPointIndex].x = targetX;
-        points[grabbedPointIndex].y = targetY;
-        
-        let total = points.length;
-        let steps = groupWordsActive ? 5 : 3; 
-        let falloffs = groupWordsActive ? [0.65, 0.45, 0.3, 0.18, 0.08] : [0.35, 0.18, 0.05]; 
-
-        for (let i = 1; i <= steps; i++) {
-            let factor = falloffs[i - 1];
-            let idxRight = (grabbedPointIndex + i) % total;
-            points[idxRight].x += deltaX * factor;
-            points[idxRight].y += deltaY * factor;
-            
-            let idxLeft = (grabbedPointIndex - i + total) % total;
-            points[idxLeft].x += deltaX * factor;
-            points[idxLeft].y += deltaY * factor;
-        }
-    }
-
-    let shift = floor(map(knobAngle, 0, 2 * Math.PI, 0, numPoints));
-    let strokeVal = parseInt(strokeSlider.value);
-
-    if (clipTextActive) {
-        // MODO CALAR AVANZADO: Usamos el buffer gráfico como lienzo de corte stencil
-        maskBuffer.clear();
-        maskBuffer.push();
-        
-        // Dibujar el cuerpo sólido de la Isla en el buffer
-        maskBuffer.fill(bgColorInput.value);
-        if (strokeVal > 0) {
-            maskBuffer.stroke(textColorInput.value);
-            maskBuffer.strokeWeight(strokeVal);
-        } else {
-            maskBuffer.noStroke();
-        }
-
-        if (contourMode === "curve") {
-            maskBuffer.beginShape();
-            maskBuffer.curveVertex(points[points.length - 1].x, points[points.length - 1].y);
-            for (let p of points) maskBuffer.curveVertex(p.x, p.y);
-            maskBuffer.curveVertex(points[0].x, points[0].y);
-            maskBuffer.curveVertex(points[1].x, points[1].y);
-            maskBuffer.endShape(CLOSE);
-        } else {
-            maskBuffer.beginShape();
-            for (let p of points) maskBuffer.vertex(p.x, p.y);
-            maskBuffer.endShape(CLOSE);
-        }
-
-        // Cortar la geometría usando la operación de borrado tipográfico REMOVE
-        maskBuffer.blendMode(REMOVE);
-        maskBuffer.noStroke();
-        maskBuffer.fill(0, 0, 0, 255); // Relleno opaco de perforación
-        maskBuffer.textSize(parseInt(sizeSlider.value));
-        maskBuffer.textAlign(CENTER, CENTER);
-
-        renderTextToBuffer(maskBuffer, shift, numPoints);
-        maskBuffer.pop();
-
-        // Estampar la isla ya perforada encima del fondo
-        image(maskBuffer, 0, 0);
-
-        // Si hay contorno activo, se vuelve a dibujar el texto encima de forma clásica solo como línea vacía
-        if (strokeVal > 0) {
-            push();
-            noFill();
-            stroke(textColorInput.value);
-            strokeWeight(strokeVal);
-            textSize(parseInt(sizeSlider.value));
-            renderTextToCanvas(shift, numPoints);
-            pop();
-        }
-
-    } else {
-        // MODO CLÁSICO: Relleno e impresión normal
-        fill(bgColorInput.value);
-        if (strokeVal > 0) {
-            stroke(textColorInput.value);
-            strokeWeight(strokeVal);
-        } else {
-            noStroke();
-        }
-
-        if (contourMode === "curve") {
-            beginShape();
-            curveVertex(points[points.length - 1].x, points[points.length - 1].y);
-            for (let p of points) curveVertex(p.x, p.y);
-            curveVertex(points[0].x, points[0].y);
-            curveVertex(points[1].x, points[1].y);
-            endShape(CLOSE);
-        } else {
-            beginShape();
-            for (let p of points) vertex(p.x, p.y);
-            endShape(CLOSE);
-        }
-
-        noStroke(); 
-        fill(textColorInput.value);
-        textSize(parseInt(sizeSlider.value));
-        renderTextToCanvas(shift, numPoints);
-    }
+body.dark-mode {
+    --bg-main: #0f172a;
+    --panel-bg: rgba(30, 41, 59, 0.95);
+    --border-color: #334155;
+    --text-dark: #f8fafc;
+    --text-muted: #94a3b8;
+    --input-bg: #1e293b;
+    --knob-bg: #334155;
 }
 
-// Funciones modulares de renderizado textual cruzado
-function renderTextToBuffer(targetBuffer, shift, numPoints) {
-    for (let i = 0; i < points.length; i++) {
-        let letterIndex = (i - shift + numPoints) % numPoints;
-        let letter = textString[letterIndex] || '';
-        if (letter === ' ') continue;
-
-        let p = points[i];
-        let offsetVisualX = 0, offsetVisualY = 0;
-        
-        if (groupWordsActive) {
-            let nextIndex = (letterIndex + 1) % numPoints;
-            let prevIndex = (letterIndex - 1 + numPoints) % numPoints;
-            if (textString[nextIndex] === ' ' || textString[prevIndex] === ' ') {
-                let angleUnit = map(i, 0, points.length, 0, TWO_PI);
-                offsetVisualX = cos(angleUnit) * 4;
-                offsetVisualY = sin(angleUnit) * 4;
-            }
-        }
-        targetBuffer.text(letter, p.x + offsetVisualX, p.y + offsetVisualY);
-    }
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    position: relative;
+    transition: background-color 0.3s ease;
 }
 
-function renderTextToCanvas(shift, numPoints) {
-    for (let i = 0; i < points.length; i++) {
-        let letterIndex = (i - shift + numPoints) % numPoints;
-        let letter = textString[letterIndex] || '';
-        if (letter === ' ') continue;
-
-        let p = points[i];
-        let offsetVisualX = 0, offsetVisualY = 0;
-
-        if (groupWordsActive) {
-            let nextIndex = (letterIndex + 1) % numPoints;
-            let prevIndex = (letterIndex - 1 + numPoints) % numPoints;
-            if (textString[nextIndex] === ' ' || textString[prevIndex] === ' ') {
-                let angleUnit = map(i, 0, points.length, 0, TWO_PI);
-                offsetVisualX = cos(angleUnit) * 4;
-                offsetVisualY = sin(angleUnit) * 4;
-            }
-        }
-        text(letter, p.x + offsetVisualX, p.y + offsetVisualY);
-    }
+.draggable-window {
+    position: absolute;
+    z-index: 10;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    transition: top 0.35s cubic-bezier(0.4, 0, 0.2, 1), left 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, border-color 0.3s ease;
+    touch-action: none; /* NUEVO: Evita comportamientos nativos de scroll al arrastrar ventanas en celular */
 }
 
-function toggleClipText() {
-    clipTextActive = !clipTextActive;
-    if (clipTextActive) {
-        clipTextBtn.classList.add('active');
-    } else {
-        clipTextBtn.classList.remove('active');
-    }
+#controls-panel {
+    top: 24px;
+    left: 24px;
+    padding: 24px;
+    border-radius: 20px;
+    width: 95%;
+    max-width: 920px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-sizing: border-box;
 }
 
-function setContourMode(mode) {
-    contourMode = mode;
-    if (mode === "curve") {
-        contourCurveBtn.classList.add('active');
-        contourSharpBtn.classList.remove('active');
-    } else {
-        contourSharpBtn.classList.add('active');
-        contourCurveBtn.classList.remove('active');
-    }
+#canvas-window {
+    top: 415px;
+    left: 24px;
+    border-radius: 20px;
+    overflow: hidden;
+    display: inline-block;
 }
 
-function handleFontUpload(e) {
-    let file = e.target.files[0];
-    if (file) {
-        let reader = new FileReader();
-        reader.onload = function(event) {
-            customFont = loadFont(event.target.result, () => {
-                updateBufferFont();
-                fontButtonLabel.innerText = file.name.substring(0, 12) + "...";
-            });
-        }
-        reader.readAsDataURL(file);
-    }
+.window-handle {
+    cursor: grab;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
 }
 
-function updateBufferFont() {
-    if (customFont) {
-        textFont(customFont);
-        maskBuffer.textFont(customFont);
-    } else {
-        textFont('sans-serif');
-        maskBuffer.textFont('sans-serif');
-    }
+.window-handle:active {
+    cursor: grabbing;
 }
 
-// Modificación responsive de redimensionamiento de buffers internos
-function updateCanvasDimensions() {
-    let mode = sizeModeSelect.value;
-    let targetW = 600;
-    let targetH = 600;
-
-    if (mode === 'ratio') {
-        let ratio = aspectRatioSelect.value;
-        if (ratio === 'custom') {
-            customDimensionsDiv.classList.remove('hidden-inputs');
-            let rX = parseFloat(customWInput.value) || 1;
-            let rY = parseFloat(customHInput.value) || 1;
-            targetH = Math.round(targetW * (rY / rX));
-        } else {
-            customDimensionsDiv.classList.add('hidden-inputs');
-            if (ratio === "4:3") targetH = Math.round(targetW * (3 / 4));
-            if (ratio === "3:4") targetH = Math.round(targetW * (4 / 3));
-            if (ratio === "16:9") targetH = Math.round(targetW * (9 / 16));
-            if (ratio === "9:16") targetH = Math.round(targetW * (16 / 9));
-        }
-    } else {
-        targetW = parseInt(customWInput.value) || 600;
-        targetH = parseInt(customHInput.value) || 600;
-    }
-
-    resizeCanvas(targetW, targetH);
-    maskBuffer = createGraphics(targetW, targetH); // Redimensionar buffer de calado
-    updateBufferFont();
-    initializeIsland();
-    setTimeout(updateWindowsPositions, 50);
+.panel-header {
+    padding-bottom: 4px;
+    width: 100%;
 }
 
-function updateWindowsPositions() {
-    const panel = document.getElementById('controls-panel');
-    const canvasWin = document.getElementById('canvas-window');
-    
-    const panelHeight = panel.offsetHeight;
-    const canvasHeight = canvasWin.offsetHeight;
-    
-    if (currentWindowsLayout === "normal") {
-        panel.style.top = "24px";
-        canvasWin.style.top = (24 + panelHeight + 24) + "px";
-        moveCanvasDownBtn.disabled = true;
-        moveCanvasUpBtn.disabled = false;
-    } else {
-        canvasWin.style.top = "24px";
-        panel.style.top = (24 + canvasHeight + 32) + "px";
-        moveCanvasUpBtn.disabled = true;
-        moveCanvasDownBtn.disabled = false;
-    }
-    
-    panel.style.left = "24px";
-    canvasWin.style.left = "24px";
+.header-main-info {
+    flex: 1;
 }
 
-function animateLayoutSwap() {
-    currentWindowsLayout = (currentWindowsLayout === "normal") ? "swapped" : "normal";
-    updateWindowsPositions();
+.panel-header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0 0 4px 0;
 }
 
-function toggleGroupWords() {
-    groupWordsActive = !groupWordsActive;
-    if (groupWordsActive) {
-        groupWordsBtn.classList.add('active');
-    } else {
-        groupWordsBtn.classList.remove('active');
-    }
-    initializeIsland();
+.panel-header p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 8px 0;
 }
 
-function handleKnobRotation(e) {
-    const rect = rotateKnob.getBoundingClientRect();
-    const knobX = rect.left + rect.width / 2;
-    const knobY = rect.top + rect.height / 2;
-    
-    const deltaX = e.clientX - knobX;
-    const deltaY = e.clientY - knobY;
-    
-    knobAngle = Math.atan2(deltaY, deltaX) + Math.PI / 2;
-    if (knobAngle < 0) knobAngle += 2 * Math.PI;
-
-    const deg = knobAngle * (180 / Math.PI);
-    knobIndicator.style.transform = `rotate(${deg}deg)`;
+.dark-mode-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-dark);
+    font-size: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    margin-left: 15px;
 }
 
-function handleImageUpload(e) {
-    let file = e.target.files[0];
-    if (file) {
-        let reader = new FileReader();
-        reader.onload = function(event) {
-            bgImg = loadImage(event.target.result, () => {
-                imageAdjustRow.classList.remove('hidden-inputs');
-                imgZoom.value = 100;
-                imgX.value = 0;
-                imgY.value = 0;
-                updateWindowsPositions();
-            });
-        }
-        reader.readAsDataURL(file);
-    }
+.dark-mode-btn:hover {
+    background: var(--input-bg);
+    transform: scale(1.05);
 }
 
-function removeBackgroundImage() {
-    bgImg = null;
-    bgImageInput.value = "";
-    imageAdjustRow.classList.add('hidden-inputs');
-    updateWindowsPositions();
+.canvas-window-header {
+    background-color: var(--input-bg);
+    border-bottom: 1px solid var(--border-color);
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-function handleSizeModeChange() {
-    let mode = sizeModeSelect.value;
-    if (mode === 'ratio') {
-        ratioSelectorGroup.classList.remove('hidden-inputs');
-        labelW.innerText = "Prop. X";
-        labelH.innerText = "Prop. Y";
-        if (aspectRatioSelect.value !== 'custom') {
-            customDimensionsDiv.classList.add('hidden-inputs');
-        } else {
-            customDimensionsDiv.classList.remove('hidden-inputs');
-        }
-    } else {
-        ratioSelectorGroup.classList.add('hidden-inputs');
-        customDimensionsDiv.classList.remove('hidden-inputs');
-        labelW.innerText = "Ancho (px)";
-        labelH.innerText = "Alto (px)";
-    }
-    updateCanvasDimensions();
+.center-sort-controls {
+    display: flex;
+    gap: 8px;
 }
 
-function initializeIsland() {
-    points = [];
-    if (groupWordsActive) {
-        textString = textInput.value;
-    } else {
-        textString = textInput.value.replace(/\s/g, '');
-    }
-    let numPoints = textString.length;
-    lastPointsCount = numPoints;
-    
-    let centerX = width / 2;
-    let centerY = height / 2;
-    let radius = min(width, height) * 0.28;
-
-    for (let i = 0; i < numPoints; i++) {
-        let angle = map(i, 0, numPoints, 0, TWO_PI);
-        let x = centerX + cos(angle) * radius;
-        let y = centerY + sin(angle) * radius;
-        points.push({ x: x, y: y });
-    }
+.window-sort-btn {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-dark);
+    font-size: 13px;
+    font-weight: 800;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
 }
 
-function fullReset() {
-    sizeSlider.value = 50;
-    strokeSlider.value = 0;
-    
-    knobAngle = 0;
-    knobIndicator.style.transform = `rotate(0deg)`;
-    
-    groupWordsActive = false;
-    groupWordsBtn.classList.remove('active');
-
-    clipTextActive = false;
-    clipTextBtn.classList.remove('active');
-    setContourMode("curve");
-
-    bgColorInput.value = "#5a636a";
-    textColorInput.value = "#111111";
-    canvasBgColorInput.value = "#ffffff";
-    
-    bgColorPreview.style.backgroundColor = "#5a636a";
-    textColorPreview.style.backgroundColor = "#111111";
-    canvasBgPreview.style.backgroundColor = "#ffffff";
-    
-    customFont = null;
-    fontInput.value = "";
-    fontButtonLabel.innerText = "Cargar Fuente";
-    updateBufferFont();
-    
-    currentWindowsLayout = "normal";
-    
-    removeBackgroundImage();
-    initializeIsland();
-    setTimeout(updateWindowsPositions, 50);
+.window-sort-btn:hover:not(:disabled) {
+    background: var(--input-bg);
+    border-color: var(--text-muted);
 }
 
-function adjustPointsCount() {
-    let currentText = groupWordsActive ? textInput.value : textInput.value.replace(/\s/g, '');
-    if(currentText.length < 3) return;
-    
-    let centerX = 0, centerY = 0;
-    for(let p of points) {
-        centerX += p.x;
-        centerY += p.y;
-    }
-    centerX = points.length ? centerX / points.length : width / 2;
-    centerY = points.length ? centerY / points.length : height / 2;
-    
-    let radius = min(width, height) * 0.28;
-    points = [];
-    for (let i = 0; i < currentText.length; i++) {
-        let angle = map(i, 0, currentText.length, 0, TWO_PI);
-        let x = centerX + cos(angle) * radius;
-        let y = centerY + sin(angle) * radius;
-        points.push({ x: x, y: y });
-    }
+.window-sort-btn:disabled {
+    color: var(--border-color);
+    background: var(--input-bg);
+    cursor: not-allowed;
 }
 
-function mousePressed() {
-    let closestDist = 30;
-    grabbedPointIndex = null;
-    for (let i = 0; i < points.length; i++) {
-        let d = dist(mouseX, mouseY, points[i].x, points[i].y);
-        if (d < closestDist) {
-            closestDist = d;
-            grabbedPointIndex = i;
-        }
-    }
+.main-layout {
+    display: flex;
+    gap: 35px;
+    width: 100%;
+    align-items: flex-start;
 }
 
-function mouseReleased() {
-    grabbedPointIndex = null;
+.left-column {
+    flex: 1.1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-function exportPoster() {
-    let name = textInput.value.trim().toLowerCase().replace(/\s+/g, '-');
-    if (!name) name = 'afiche-isla';
-    saveCanvas(name, 'png');
+.right-column {
+    flex: 1.3;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-function initWindowDragging(windowElement) {
-    const handle = windowElement.querySelector('.window-handle');
-    if (!handle) return;
+.dimensions-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    width: 100%;
+}
 
-    let posX = 0, posY = 0, mouseX = 0, mouseY = 0;
+.dimensions-row #ratio-selector-group {
+    flex: 1;
+}
 
-    handle.addEventListener('mousedown', dragMouseDown);
+.dimensions-row #ratio-selector-group select {
+    width: 100%;
+}
 
-    function dragMouseDown(e) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL') {
-            return;
-        }
-        e.preventDefault();
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-        document.addEventListener('mouseup', closeDragElement);
-        document.addEventListener('mousemove', elementDrag);
-    }
+#custom-dimensions {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
 
-    function elementDrag(e) {
-        e.preventDefault();
-        posX = mouseX - e.clientX;
-        posY = mouseY - e.clientY;
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-        
-        windowElement.style.top = (windowElement.offsetTop - posY) + "px";
-        windowElement.style.left = (windowElement.offsetLeft - posX) + "px";
-    }
+.numerical-input {
+    max-width: 75px;
+}
 
-    function closeDragElement() {
-        document.removeEventListener('mouseup', closeDragElement);
-        document.removeEventListener('mousemove', elementDrag);
-    }
+.files-row {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+
+.full-width-button {
+    flex: 1;
+}
+
+.sliders-and-knob {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+    width: 100%;
+}
+
+.sliders-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+}
+
+.toggle-container-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.toggle-button {
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-dark);
+    font-weight: 600;
+    font-size: 12px;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    text-align: center;
+}
+
+.toggle-button:hover {
+    background-color: var(--border-color);
+}
+
+.toggle-button.active {
+    background-color: var(--text-dark);
+    color: var(--input-bg);
+    border-color: var(--text-dark);
+}
+
+.mini-variant {
+    max-width: 90px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.footer-left-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 20px;
+    margin-top: 4px;
+}
+
+.geometry-advanced-row {
+    display: flex;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.radio-button-group {
+    display: flex;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2px;
+    width: 100%;
+    max-width: 180px;
+}
+
+.radio-tab-btn {
+    flex: 1;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.radio-tab-btn.active {
+    background: var(--panel-bg);
+    color: var(--text-dark);
+    box-shadow: 0 2px 5px rgba(15,23,42,0.06);
+}
+
+.knob-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.knob-container label {
+    font-size: 10px;
+}
+
+.knob {
+    width: 84px;
+    height: 84px;
+    background-color: var(--knob-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    position: relative;
+    cursor: grab;
+    user-select: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.knob:active {
+    cursor: grabbing;
+    border-color: var(--text-muted);
+}
+
+.knob-indicator {
+    width: 12px;
+    height: 12px;
+    background-color: var(--text-muted);
+    border-radius: 50%;
+    position: absolute;
+    top: 10px;
+    left: calc(50% - 6px);
+    transform-origin: center 32px; 
+    pointer-events: none;
+}
+
+.knob-center-play {
+    width: 36px;
+    height: 36px;
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    color: var(--text-dark);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    z-index: 5;
+    padding: 0;
+    transition: all 0.15s ease;
+}
+
+.knob-center-play:hover {
+    background-color: var(--input-bg);
+    transform: scale(1.05);
+}
+
+.knob-center-play.playing {
+    background-color: var(--text-dark);
+    color: var(--input-bg);
+    border-color: var(--text-dark);
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.shrink-fit {
+    min-width: 135px;
+    max-width: 145px;
+}
+
+label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+input[type="text"], input[type="number"], select, input[type="range"] {
+    box-sizing: border-box;
+    outline: none;
+    width: 100%;
+}
+
+input[type="text"], input[type="number"], select {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+    background: var(--input-bg);
+    height: 40px;
+}
+
+select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    padding-right: 32px;
+}
+
+.hidden-inputs {
+    display: none !important;
+}
+
+.file-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-dark);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    height: 40px;
+    box-sizing: border-box;
+    text-align: center;
+    width: 100%;
+}
+
+.file-upload-btn:hover {
+    background-color: var(--border-color);
+}
+
+.color-pickers {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.color-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.color-item label {
+    font-size: 9px;
+}
+
+.custom-color-picker {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--panel-bg);
+    box-shadow: 0 0 0 1px var(--border-color);
+    overflow: hidden;
+}
+
+.custom-color-picker input[type="color"] {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 60px;
+    height: 60px;
+    border: none;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.color-preview {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.actions-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    margin-top: auto;
+    width: 100%;
+}
+
+.buttons-group {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+button {
+    background-color: var(--text-dark);
+    color: var(--panel-bg);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    height: 40px;
+}
+
+button:hover {
+    filter: brightness(0.9);
+}
+
+.icon-btn {
+    font-size: 18px;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#export-btn {
+    color: white !important;
+}
+
+#export-btn:hover {
+    background-color: #1d4ed8 !important;
+}
+
+.info-text {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2563eb;
+}
+
+#canvas-container {
+    background: transparent;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.row {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    justify-content: space-between;
 }
