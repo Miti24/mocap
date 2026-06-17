@@ -4,6 +4,18 @@
     --border-color: #e2e8f0;
     --text-dark: #0f172a;
     --text-muted: #64748b;
+    --input-bg: #ffffff;
+    --knob-bg: #ecf0f5;
+}
+
+body.dark-mode {
+    --bg-main: #0f172a;
+    --panel-bg: rgba(30, 41, 59, 0.95);
+    --border-color: #334155;
+    --text-dark: #f8fafc;
+    --text-muted: #94a3b8;
+    --input-bg: #1e293b;
+    --knob-bg: #334155;
 }
 
 body {
@@ -13,6 +25,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     min-height: 100vh;
     position: relative;
+    transition: background-color 0.3s ease;
 }
 
 .draggable-window {
@@ -20,7 +33,9 @@ body {
     z-index: 10;
     box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
     background: var(--panel-bg);
-    transition: top 0.35s cubic-bezier(0.4, 0, 0.2, 1), left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid var(--border-color);
+    transition: top 0.35s cubic-bezier(0.4, 0, 0.2, 1), left 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, border-color 0.3s ease;
+    touch-action: none; /* NUEVO: Evita comportamientos nativos de scroll al arrastrar ventanas en celular */
 }
 
 #controls-panel {
@@ -28,7 +43,6 @@ body {
     left: 24px;
     padding: 24px;
     border-radius: 20px;
-    border: 1px solid var(--border-color);
     width: 95%;
     max-width: 920px;
     display: flex;
@@ -41,7 +55,6 @@ body {
     top: 415px;
     left: 24px;
     border-radius: 20px;
-    border: 1px solid var(--border-color);
     overflow: hidden;
     display: inline-block;
 }
@@ -49,6 +62,10 @@ body {
 .window-handle {
     cursor: grab;
     user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
 }
 
 .window-handle:active {
@@ -58,6 +75,10 @@ body {
 .panel-header {
     padding-bottom: 4px;
     width: 100%;
+}
+
+.header-main-info {
+    flex: 1;
 }
 
 .panel-header h1 {
@@ -73,8 +94,30 @@ body {
     margin: 0 0 8px 0;
 }
 
+.dark-mode-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-dark);
+    font-size: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    margin-left: 15px;
+}
+
+.dark-mode-btn:hover {
+    background: var(--input-bg);
+    transform: scale(1.05);
+}
+
 .canvas-window-header {
-    background-color: #f8fafc;
+    background-color: var(--input-bg);
     border-bottom: 1px solid var(--border-color);
     height: 34px;
     display: flex;
@@ -88,8 +131,8 @@ body {
 }
 
 .window-sort-btn {
-    background: white;
-    border: 1px solid #cbd5e1;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
     color: var(--text-dark);
     font-size: 13px;
     font-weight: 800;
@@ -105,14 +148,13 @@ body {
 }
 
 .window-sort-btn:hover:not(:disabled) {
-    background: #f1f5f9;
-    border-color: #94a3b8;
+    background: var(--input-bg);
+    border-color: var(--text-muted);
 }
 
 .window-sort-btn:disabled {
-    color: #cbd5e1;
-    background: #f8fafc;
-    border-color: #e2e8f0;
+    color: var(--border-color);
+    background: var(--input-bg);
     cursor: not-allowed;
 }
 
@@ -186,7 +228,6 @@ body {
     flex: 1;
 }
 
-/* Nueva Fila Superior de Modificadores */
 .toggle-container-row {
     display: flex;
     gap: 10px;
@@ -194,8 +235,8 @@ body {
 }
 
 .toggle-button {
-    background-color: #f1f5f9;
-    border: 1px solid #cbd5e1;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
     color: var(--text-dark);
     font-weight: 600;
     font-size: 12px;
@@ -209,12 +250,12 @@ body {
 }
 
 .toggle-button:hover {
-    background-color: #e2e8f0;
+    background-color: var(--border-color);
 }
 
 .toggle-button.active {
     background-color: var(--text-dark);
-    color: white;
+    color: var(--input-bg);
     border-color: var(--text-dark);
 }
 
@@ -225,7 +266,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Fila Unificada Inferior Izquierda */
 .footer-left-row {
     display: flex;
     justify-content: space-between;
@@ -243,12 +283,12 @@ body {
 
 .radio-button-group {
     display: flex;
-    background: #f1f5f9;
-    border: 1px solid #cbd5e1;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 2px;
     width: 100%;
-    max-width: 180px; /* Incrementado para dar holgura al texto Curvo/Afilado */
+    max-width: 180px;
 }
 
 .radio-tab-btn {
@@ -267,7 +307,7 @@ body {
 }
 
 .radio-tab-btn.active {
-    background: white;
+    background: var(--panel-bg);
     color: var(--text-dark);
     box-shadow: 0 2px 5px rgba(15,23,42,0.06);
 }
@@ -286,29 +326,62 @@ body {
 .knob {
     width: 84px;
     height: 84px;
-    background-color: #ecf0f5;
-    border: 2px solid #cbd5e1;
+    background-color: var(--knob-bg);
+    border: 2px solid var(--border-color);
     border-radius: 50%;
     position: relative;
     cursor: grab;
     user-select: none;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .knob:active {
     cursor: grabbing;
-    border-color: #94a3b8;
+    border-color: var(--text-muted);
 }
 
 .knob-indicator {
     width: 12px;
     height: 12px;
-    background-color: #94a3b8;
+    background-color: var(--text-muted);
     border-radius: 50%;
     position: absolute;
     top: 10px;
     left: calc(50% - 6px);
     transform-origin: center 32px; 
+    pointer-events: none;
+}
+
+.knob-center-play {
+    width: 36px;
+    height: 36px;
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    color: var(--text-dark);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    z-index: 5;
+    padding: 0;
+    transition: all 0.15s ease;
+}
+
+.knob-center-play:hover {
+    background-color: var(--input-bg);
+    transform: scale(1.05);
+}
+
+.knob-center-play.playing {
+    background-color: var(--text-dark);
+    color: var(--input-bg);
+    border-color: var(--text-dark);
 }
 
 .control-group {
@@ -338,12 +411,12 @@ input[type="text"], input[type="number"], select, input[type="range"] {
 
 input[type="text"], input[type="number"], select {
     padding: 10px 12px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
     color: var(--text-dark);
-    background: white;
+    background: var(--input-bg);
     height: 40px;
 }
 
@@ -365,8 +438,8 @@ select {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: white;
-    border: 1px solid #cbd5e1;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
     color: var(--text-dark);
     padding: 10px 12px;
     border-radius: 8px;
@@ -380,8 +453,7 @@ select {
 }
 
 .file-upload-btn:hover {
-    background-color: #f8fafc;
-    border-color: #94a3b8;
+    background-color: var(--border-color);
 }
 
 .color-pickers {
@@ -407,8 +479,8 @@ select {
     height: 34px;
     border-radius: 50%;
     cursor: pointer;
-    border: 2px solid white;
-    box-shadow: 0 0 0 1px #cbd5e1;
+    border: 2px solid var(--panel-bg);
+    box-shadow: 0 0 0 1px var(--border-color);
     overflow: hidden;
 }
 
@@ -447,7 +519,7 @@ select {
 
 button {
     background-color: var(--text-dark);
-    color: white;
+    color: var(--panel-bg);
     border: none;
     padding: 10px 20px;
     border-radius: 8px;
@@ -458,7 +530,7 @@ button {
 }
 
 button:hover {
-    background-color: #000000;
+    filter: brightness(0.9);
 }
 
 .icon-btn {
@@ -469,6 +541,10 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+#export-btn {
+    color: white !important;
 }
 
 #export-btn:hover {
@@ -482,7 +558,7 @@ button:hover {
 }
 
 #canvas-container {
-    background: white;
+    background: transparent;
     overflow: hidden;
     display: flex;
     justify-content: center;
