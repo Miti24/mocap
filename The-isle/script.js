@@ -5,6 +5,9 @@ let bgImg = null;
 let customFont = null;
 let lastPointsCount = 0;
 
+let isDraggingKnob = false;
+let knobAngle = 0; 
+
 const textInput = document.getElementById('text-input');
 const bgColorInput = document.getElementById('bg-color');
 const textColorInput = document.getElementById('text-color');
@@ -16,7 +19,8 @@ const canvasBgPreview = document.getElementById('canvas-bg-preview');
 
 const sizeSlider = document.getElementById('size-slider');
 const strokeSlider = document.getElementById('stroke-slider');
-const rotateSlider = document.getElementById('rotate-slider');
+const rotateKnob = document.getElementById('rotation-knob');
+const knobIndicator = document.getElementById('knob-indicator');
 const resetBtn = document.getElementById('reset-btn');
 const exportBtn = document.getElementById('export-btn');
 const infoText = document.getElementById('dynamic-info');
@@ -59,11 +63,18 @@ function setup() {
     removeImgBtn.addEventListener('click', removeBackgroundImage);
     fontInput.addEventListener('change', handleFontUpload);
 
+    rotateKnob.addEventListener('mousedown', (e) => { isDraggingKnob = true; handleKnobRotation(e); });
+    window.addEventListener('mousemove', (e) => { if (isDraggingKnob) handleKnobRotation(e); });
+    window.addEventListener('mouseup', () => isDraggingKnob = false);
+
     textAlign(CENTER, CENTER);
     updateSelectedFont();
     textStyle(BOLD);
 
     initializeIsland();
+    
+    initWindowDragging(document.getElementById('controls-panel'));
+    initWindowDragging(document.getElementById('canvas-window'));
 }
 
 function draw() {
@@ -133,7 +144,7 @@ function draw() {
     fill(textColorInput.value);
     textSize(parseInt(sizeSlider.value));
     
-    let shift = floor(map(rotateSlider.value, 0, 100, 0, numPoints));
+    let shift = floor(map(knobAngle, 0, 2 * Math.PI, 0, numPoints));
 
     for (let i = 0; i < points.length; i++) {
         let p = points[i];
@@ -141,6 +152,21 @@ function draw() {
         let letter = textString[letterIndex] || '';
         text(letter, p.x, p.y);
     }
+}
+
+function handleKnobRotation(e) {
+    const rect = rotateKnob.getBoundingClientRect();
+    const knobX = rect.left + rect.width / 2;
+    const knobY = rect.top + rect.height / 2;
+    
+    const deltaX = e.clientX - knobX;
+    const deltaY = e.clientY - knobY;
+    
+    knobAngle = Math.atan2(deltaY, deltaX) + Math.PI / 2;
+    if (knobAngle < 0) knobAngle += 2 * Math.PI;
+
+    const deg = knobAngle * (180 / Math.PI);
+    knobIndicator.style.transform = `rotate(${deg}deg)`;
 }
 
 function handleFontUpload(e) {
@@ -176,7 +202,7 @@ function handleImageUpload(e) {
                 imgX.value = 0;
                 imgY.value = 0;
             });
-                }
+        }
         reader.readAsDataURL(file);
     }
 }
@@ -224,6 +250,7 @@ function updateCanvasDimensions() {
             if (ratio === "4:3") targetH = Math.round(targetW * (3 / 4));
             if (ratio === "3:4") targetH = Math.round(targetW * (4 / 3));
             if (ratio === "16:9") targetH = Math.round(targetW * (9 / 16));
+            if (ratio === "9:16") targetH = Math.round(targetW * (16 / 9));
         }
     } else {
         targetW = parseInt(customWInput.value) || 600;
@@ -255,7 +282,9 @@ function initializeIsland() {
 function fullReset() {
     sizeSlider.value = 50;
     strokeSlider.value = 0;
-    rotateSlider.value = 50;
+    
+    knobAngle = 0;
+    knobIndicator.style.transform = `rotate(0deg)`;
     
     bgColorInput.value = "#5a636a";
     textColorInput.value = "#111111";
@@ -316,4 +345,40 @@ function exportPoster() {
     let name = textInput.value.trim().toLowerCase().replace(/\s+/g, '-');
     if (!name) name = 'afiche-isla';
     saveCanvas(name, 'png');
+}
+
+function initWindowDragging(windowElement) {
+    const handle = windowElement.querySelector('.window-handle');
+    if (!handle) return;
+
+    let posX = 0, posY = 0, mouseX = 0, mouseY = 0;
+
+    handle.addEventListener('mousedown', dragMouseDown);
+
+    function dragMouseDown(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL') {
+            return;
+        }
+        e.preventDefault();
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        document.addEventListener('mouseup', closeDragElement);
+        document.addEventListener('mousemove', elementDrag);
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+        posX = mouseX - e.clientX;
+        posY = mouseY - e.clientY;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        
+        windowElement.style.top = (windowElement.offsetTop - posY) + "px";
+        windowElement.style.left = (windowElement.offsetLeft - posX) + "px";
+    }
+
+    function closeDragElement() {
+        document.removeEventListener('mouseup', closeDragElement);
+        document.removeEventListener('mousemove', elementDrag);
+    }
 }
