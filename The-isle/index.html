@@ -3,82 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Islas de Texto Interactiva</title>
+    <title>MOCap Estudio</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="controls-panel">
-        <div class="panel-header">
-            <h1>The island in formation 2026</h1>
-            <p>Inspired by the book Quelques îles en formation (2007) by Étienne Pressager.</p>
+    <div id="controls-panel" class="draggable-window">
+        <div class="panel-header window-handle">
+            <h1>Islas en formación o Geografías del texto</h1>
+            <p>Inspirado en el libro Quelques îles en formation (2007) de Étienne Pressager.</p>
         </div>
 
-        <div class="row">
-            <div class="control-group" style="flex: 2; min-width: 200px;">
-                <label for="text-input">Contenido del texto</label>
-                <input type="text" id="text-input" value="Mocap Estudio">
-            </div>
-            <div class="control-group">
-                <label for="size-slider">Escala Texto</label>
-                <input type="range" id="size-slider" min="10" max="100" value="50">
-            </div>
-            <div class="control-group">
-                <label for="stroke-slider">Grosor Contorno</label>
-                <input type="range" id="stroke-slider" min="0" max="10" value="0">
-            </div>
-            <div class="control-group">
-                <label for="rotate-slider">Rotar Orden Texto</label>
-                <input type="range" id="rotate-slider" min="0" max="100" value="50">
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="control-group" style="max-width: 120px;">
-                <label for="size-mode">Definir por</label>
-                <select id="size-mode">
-                    <option value="ratio">Proporción</option>
-                    <option value="pixels">Píxeles</option>
-                </select>
-            </div>
-
-            <div class="control-group" id="ratio-selector-group" style="max-width: 150px;">
-                <label for="aspect-ratio">Proporción Afiche</label>
-                <select id="aspect-ratio">
-                    <option value="1:1">Cuadrado (1:1)</option>
-                    <option value="4:3">Estándar (4:3)</option>
-                    <option value="3:4">Vertical (3:4)</option>
-                    <option value="16:9">Panorámico (16:9)</option>
-                    <option value="custom">Personalizado...</option>
-                </select>
-            </div>
-
-            <div id="custom-dimensions" class="row hidden-inputs" style="gap: 10px;">
-                <div class="control-group" style="max-width: 75px;">
-                    <label id="label-w" for="custom-w">Ancho</label>
-                    <input type="number" id="custom-w" min="100" max="2000" value="600">
+        <div class="main-layout">
+            <div class="left-column">
+                <div class="control-group">
+                    <label for="text-input">Contenido del texto</label>
+                    <input type="text" id="text-input" value="Mocap Estudio">
                 </div>
-                <div class="control-group" style="max-width: 75px;">
-                    <label id="label-h" for="custom-h">Alto</label>
-                    <input type="number" id="custom-h" min="100" max="2000" value="600">
+
+                <div class="dimensions-row">
+                    <div class="control-group shrink-fit">
+                        <label for="size-mode">Definir por</label>
+                        <select id="size-mode">
+                            <option value="ratio">Proporción</option>
+                            <option value="pixels">Resolución</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group" id="ratio-selector-group">
+                        <select id="aspect-ratio">
+                            <option value="1:1">Cuadrado (1:1)</option>
+                            <option value="4:3">Estándar (4:3)</option>
+                            <option value="3:4">Vertical (3:4)</option>
+                            <option value="16:9">Panorámico (16:9)</option>
+                            <option value="9:16">Vertical (9:16)</option>
+                            <option value="custom">Personalizado...</option>
+                        </select>
+                    </div>
+
+                    <div id="custom-dimensions" class="hidden-inputs">
+                        <div class="control-group numerical-input">
+                            <label id="label-w" for="custom-w">Ancho</label>
+                            <input type="number" id="custom-w" min="100" max="2000" value="600">
+                        </div>
+                        <div class="control-group numerical-input">
+                            <label id="label-h" for="custom-h">Alto</label>
+                            <input type="number" id="custom-h" min="100" max="2000" value="600">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="color-pickers">
+                    <div class="color-item">
+                        <div class="custom-color-picker">
+                            <input type="color" id="bg-color" value="#5a636a">
+                            <div id="bg-color-preview" class="color-preview" style="background-color: #5a636a;"></div>
+                        </div>
+                        <label for="bg-color">Isla</label>
+                    </div>
+                    <div class="color-item">
+                        <div class="custom-color-picker">
+                            <input type="color" id="text-color" value="#111111">
+                            <div id="text-color-preview" class="color-preview" style="background-color: #111111;"></div>
+                        </div>
+                        <label for="text-color">Texto</label>
+                    </div>
+                    <div class="color-item">
+                        <div class="custom-color-picker">
+                            <input type="color" id="canvas-bg-color" value="#ffffff">
+                            <div id="canvas-bg-preview" class="color-preview" style="background-color: #ffffff;"></div>
+                        </div>
+                        <label for="canvas-bg-color">Fondo</label>
+                    </div>
                 </div>
             </div>
 
-            <div class="control-group">
-                <label>Imagen de Fondo</label>
-                <label for="bg-image-input" class="file-upload-btn">Cargar Imagen</label>
-                <input type="file" id="bg-image-input" accept="image/*" style="display: none;">
-            </div>
+            <div class="right-column">
+                <div class="sliders-and-knob">
+                    <div class="sliders-stack">
+                        <div class="control-group">
+                            <label for="size-slider">Escala Texto</label>
+                            <input type="range" id="size-slider" min="10" max="100" value="50">
+                        </div>
+                        <div class="control-group">
+                            <label for="stroke-slider">Grosor Contorno</label>
+                            <input type="range" id="stroke-slider" min="0" max="10" value="0">
+                        </div>
+                    </div>
 
-            <div class="control-group">
-                <label id="font-label">Tipografía (.ttf/.otf)</label>
-                <label for="font-input" id="font-button-label" class="file-upload-btn">Cargar Fuente</label>
-                <input type="file" id="font-input" accept=".ttf,.otf" style="display: none;">
+                    <div class="knob-container">
+                        <label>Rotación del texto</label>
+                        <div id="rotation-knob" class="knob">
+                            <div id="knob-indicator" class="knob-indicator"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="files-row">
+                    <div class="control-group full-width-button">
+                        <label>Imagen de Fondo</label>
+                        <label for="bg-image-input" class="file-upload-btn">Cargar Imagen</label>
+                        <input type="file" id="bg-image-input" accept="image/*" style="display: none;">
+                    </div>
+
+                    <div class="control-group full-width-button">
+                        <label id="font-label">Tipografía (.ttf/.otf)</label>
+                        <label for="font-input" id="font-button-label" class="file-upload-btn">Cargar Fuente</label>
+                        <input type="file" id="font-input" accept=".ttf,.otf" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="actions-wrapper">
+                    <div id="dynamic-info" class="info-text">Tamaño: 600x600 px</div>
+                    <div class="buttons-group">
+                        <button id="reset-btn">Resetear</button>
+                        <button id="export-btn" style="background-color: #2563eb;">Exportar PNG</button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="image-adjust-row" class="row hidden-inputs" style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px dashed #cbd5e1;">
+        <div id="image-adjust-row" class="row hidden-inputs" style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px dashed #cbd5e1; margin-top: 15px;">
             <div class="control-group">
                 <label for="img-zoom">Zoom Imagen</label>
                 <input type="range" id="img-zoom" min="10" max="300" value="100">
@@ -93,42 +139,16 @@
             </div>
             <button id="remove-img-btn" style="background-color: #ef4444; height: 35px; padding: 0 10px; font-size: 11px;">Quitar Imagen</button>
         </div>
-
-        <div class="row">
-            <div class="color-pickers">
-                <div class="color-item">
-                    <div class="custom-color-picker">
-                        <input type="color" id="bg-color" value="#5a636a">
-                        <div id="bg-color-preview" class="color-preview" style="background-color: #5a636a;"></div>
-                    </div>
-                    <label for="bg-color">Color Isla</label>
-                </div>
-                <div class="color-item">
-                    <div class="custom-color-picker">
-                        <input type="color" id="text-color" value="#111111">
-                        <div id="text-color-preview" class="color-preview" style="background-color: #111111;"></div>
-                    </div>
-                    <label for="text-color">Color Texto</label>
-                </div>
-                <div class="color-item">
-                    <div class="custom-color-picker">
-                        <input type="color" id="canvas-bg-color" value="#ffffff">
-                        <div id="canvas-bg-preview" class="color-preview" style="background-color: #ffffff;"></div>
-                    </div>
-                    <label for="canvas-bg-color">Color Fondo</label>
-                </div>
-            </div>
-
-            <div id="dynamic-info" class="info-text">Tamaño: 600x600 px</div>
-            
-            <div style="display: flex; gap: 10px;">
-                <button id="reset-btn">Resetear</button>
-                <button id="export-btn" style="background-color: #2563eb;">Exportar PNG</button>
-            </div>
-        </div>
     </div>
 
-    <div id="canvas-container"></div>
+    <div id="canvas-window" class="draggable-window">
+        <div class="canvas-window-header window-handle">
+            <div class="window-dot"></div>
+            <div class="window-dot"></div>
+            <div class="window-dot"></div>
+        </div>
+        <div id="canvas-container"></div>
+    </div>
 
     <script src="script.js"></script>
 </body>
